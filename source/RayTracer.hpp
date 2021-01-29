@@ -35,6 +35,9 @@ public:
     // This function handles the light contributions to this given ray.
     Float3 li(Ray& ray, Scene* pScene, I32 depth = 0);
 
+    Float3 specularReflect(const Ray& ray, Scene* pScene, const SurfaceInteraction& si, I32 depth);
+    Float3 specularTransmit(const Ray& ray, Scene* pScene, const SurfaceInteraction& si, I32 depth);
+
     void setCamera(Camera* cam) {
         m_pCamera = cam;
     }

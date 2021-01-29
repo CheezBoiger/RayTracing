@@ -73,9 +73,9 @@ Float3 Integrator::li(Ray& ray, Scene* pScene, I32 depth)
             Float3 li = light->sampleLi(si, wi);
             Float3 wo = si.wo; // Outgoing direction, usually represents the eye
             // Obtain the local space for the bsdf.
-            Float3 wis = toLocalSpace(wi, si);
-            Float3 wos = toLocalSpace(wo, si);
-            Float3 f = si.pMaterial->sampleDistributionF(wis, wos);
+            Float3 wis = worldToLightLocal(wi, si);
+            Float3 wos = worldToLightLocal(wo, si);
+            Float3 f = si.pMaterial->distributionF(wis, wos);
             
             F32 shadow = 1.f;
             if (light->isShadowing())
@@ -94,26 +94,48 @@ Float3 Integrator::li(Ray& ray, Scene* pScene, I32 depth)
                 }
             }
             // Light contribution factored by the BSDF distribution.
-            if (!isBlack(f)) 
-                radiance += (f * li * RT_ABS(dot(wi, si.vNormal))) * shadow;
+            
+            F32 kD = dot(wi, si.vNormal);
+            if (!isBlack(f) && kD > 0.f) 
+                radiance += (f * li * kD) * shadow;
         }
-#if 1
-        // Compute scattering, reflection.
-        Float3 r = -reflect(ray.dir, si.vNormal);
+
+        // Compute scattering, reflection and transmission.
         if (depth <= m_maxDepth)
         {
-            // Compute ray from reflection. Increment depth in the process.
-            // Compute the error, since we are using float values, they might 
-            // overshoot into the interacted surface, which will cause ray to reflect onto
-            // the same surface.
-            Float3 err = si.vNormal * 0.001f;
-            Ray reflectR =  { si.vPosition + err, r };
-            radiance += li(reflectR, pScene, depth + 1) * 0.5;
+            radiance += specularReflect(ray, pScene, si, depth + 1);
+            radiance += specularTransmit(ray, pScene, si, depth + 1);
         }
-#endif
     }
         
     return radiance;
+}
+
+
+Float3 Integrator::specularReflect(const Ray& ray, Scene* pScene, const SurfaceInteraction& si, I32 depth)
+{
+    Float3 woW = si.wo;
+    Float3 wiW;
+    Float3 f = Float3(0.3f, 0.3f, 0.3f);
+
+    if (!isBlack(f))
+    {
+        wiW = -reflect(ray.dir, si.vNormal);
+        // Compute ray from reflection. Increment depth in the process.
+        // Compute the error, since we are using float values, they might 
+        // overshoot into the interacted surface, which will cause ray to reflect onto
+        // the same surface.
+        Float3 err = si.vNormal * 0.001f;
+        Ray reflectR =  { si.vPosition + err, wiW };
+        return f * li(reflectR, pScene, depth + 1);
+    }
+        
+    return f;
+}
+
+Float3 Integrator::specularTransmit(const Ray& ray, Scene* pScene, const SurfaceInteraction& si, I32 depth)
+{
+    return Float3(0.f);
 }
 
 void Integrator::checkCamera()

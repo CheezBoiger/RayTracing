@@ -18,7 +18,13 @@ static Float3 schlickFresnel(Float3 kS, F32 cosTheta)
     return kS + (1 - kS) * powf(1 - cosTheta, 5.f);
 }
 
-Float3 toLocalSpace(const Float3& v, const SurfaceInteraction& si);
+Float3  worldToLightLocal(const Float3& v, const SurfaceInteraction& si);
+Float3  lightLocalToWorld(const Float3& v, const SurfaceInteraction& si);
+
+// Calls to see if vector w lies on the same hemisphere as wp.
+// Useful for evaulating the pdf. If the vectors do not lie in same
+// hemisphere, then the sampling probability is 0.
+B32     sameHemisphere(const Float3& w, const Float3& wp);
 
 struct Material
 {
@@ -26,14 +32,19 @@ struct Material
 
     // Sample the distribution, but also be sure to convert wi and wo to 
     // shading space before passing to this function.
-    virtual Float3 sampleDistributionF(const Float3& wi, const Float3& wo) = 0;
+    virtual Float3 distributionF(const Float3& wi, const Float3& wo) = 0;
+
+    //
+    virtual Float3 sampleDistributionF(const Float3& wo, Float3& wi, const Float2& u, F32& pdf);
+
+    virtual Float3 sampleWh(const Float3& wo, const Float2& u) { return Float3(); }
 };
 
 struct MatteMaterial : public Material
 {
     Float4              color;
     // Sample the distribution function.
-    Float3 sampleDistributionF(const Float3& wi, const Float3& wo) override;    
+    Float3 distributionF(const Float3& wi, const Float3& wo) override;
 };
 
 struct MicrofacetMaterial : public Material
@@ -50,7 +61,7 @@ struct MicrofacetMaterial : public Material
     // Metallic parameter [0, 1]
     F32                 kS;
 
-    Float3 sampleDistributionF(const Float3& wi, const Float3& wo) override;
+    Float3 distributionF(const Float3& wi, const Float3& wo) override;
 
     F32 d(F32 alphaX, F32 alphaY, const Float3& wh);
     F32 g(const Float3& wo, const Float3& wi, F32 alphaX, F32 alphaY);

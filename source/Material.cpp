@@ -47,7 +47,7 @@ Float3 lambertDiffuse(const Float3& r)
     return r * RT_INV_PI;
 }
 
-Float3 MatteMaterial::sampleDistributionF(const Float3& wi, const Float3& wo)
+Float3 MatteMaterial::distributionF(const Float3& wi, const Float3& wo)
 {
     return lambertDiffuse(color);
 }
@@ -80,6 +80,11 @@ F32 cos2Phi(const Float3& w)
 F32 sin2Phi(const Float3& w)
 {
     return sinPhi(w) * sinPhi(w);
+}
+
+B32 sameHemisphere(const Float3& w, const Float3& wp)
+{
+    return w.z * wp.z > 0.f;
 }
 
 Float3 fresnelDielectric(F32 cosThetaI, F32 etaI, F32 etaT)
@@ -134,7 +139,7 @@ F32 MicrofacetMaterial::d(F32 alphaX, F32 alphaY, const Float3& wh)
     return 1.f / (RT_PI * alphaX * alphaY * cos4Theta * (1.f + e) * (1.f + e));
 }
 
-Float3 MicrofacetMaterial::sampleDistributionF(const Float3& wi, const Float3& wo)
+Float3 MicrofacetMaterial::distributionF(const Float3& wi, const Float3& wo)
 {
     if (wo.z == 0.f) return Float3();
     // We must transfer our rays to local space, in order to use microfacet equations.
@@ -150,11 +155,34 @@ Float3 MicrofacetMaterial::sampleDistributionF(const Float3& wi, const Float3& w
     return color * (d(alphaX, alphaY, wh) * g(wo, wi, alphaX, alphaY) * fresnel / (4 * cosThetaI * cosThetaO));
 }
 
-Float3 toLocalSpace(const Float3& v, const SurfaceInteraction& si)
+Float3 worldToLightLocal(const Float3& v, const SurfaceInteraction& si)
 {
+    // We are using Gram–Schmidt to calculate our TBN.
     Float3 ns = si.vNormal;
     Float3 ss = normalize(si.dpdu);
     Float3 ts = cross(ns, ss);
     return Float3(dot(v, ss), dot(v, ts), dot(v, ns));
+}
+
+Float3 lightLocalToWorld(const Float3& v, const SurfaceInteraction& si)
+{
+    // Using Gram-Schmidt to calculate TBN.
+    Float3 ns = si.vNormal;
+    Float3 ss = normalize(si.dpdu);
+    Float3 ts = cross(ns, ss);
+    return Float3(
+        ss.x * v.x + ts.x * v.y + ns.x * v.z,
+        ss.y * v.x + ts.y * v.y + ns.y * v.z,
+        ss.z * v.x + ts.z * v.y + ns.z * v.z
+    );
+}
+
+Float3 Material::sampleDistributionF(const Float3& wo, Float3& wi, const Float2& u, F32& pdf)
+{
+    wi = Float3(-wo.x, -wo.y, wo.z);
+    pdf = 1.f;
+    // TODO: We are going to need to make a separate BSDF struct for these formulas.
+    Float3 r;
+    return fresnelDielectric(cosTheta(wi), 0.5f, 0.1f) * r / absCosTheta(wi);
 }
 } // rt
