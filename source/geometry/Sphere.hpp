@@ -33,6 +33,11 @@ private:
     }
 public:
 
+    virtual R32 area() const override
+    {
+        return 4.f * RT_PI * (m_radius * m_radius);
+    }
+
     virtual B32 intersects(const Ray& ray, SurfaceInteraction& si) override
     {
         // Transform ray to this shape's local space.
@@ -64,7 +69,16 @@ public:
         si.time = t;
         // Transform position to world space.
         si.vPosition = Float4(position, 1.0f) * m_localToWorld;
-        si.vNormal = normal;
+
+        // TODO: Not very efficient, but we are calculating our normal matrix during intersection, we should cache instead.
+        Matrix44 n = m_worldToLocal;
+        n[12] = 0.f;  
+        n[13] = 0.f;
+        n[14] = 0.f;
+        n[15] = 1.f;
+        // Transform normal back to world space.
+        si.vNormal = normalize(normal * transpose(inverse(n)));
+
         si.wo = -ray.dir;
 
         F32 zRad = sqrtf(position.x * position.x + position.y * position.y);
@@ -82,6 +96,7 @@ public:
 
     Matrix44 m_localToWorld;
     Matrix44 m_worldToLocal;
+    Matrix44 m_localToWorldNormal;
     F32 m_radius;
 };
 } // rt

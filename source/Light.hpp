@@ -59,4 +59,17 @@ struct DirectionLight : public Light
         return { si.vPosition + err, wi };
     }
 };
+
+
+struct AreaLight : public Light
+{
+    AreaLight(const Matrix44& lightToWorld, I32 nSamples);
+    virtual Float3 l(const SurfaceInteraction& si, const Float3& w) const = 0;
+
+};
+
+struct DiffuseAreaLight : public AreaLight
+{
+    virtual Float3 l(const SurfaceInteraction& si, const Float3& w) const override { return Float3(); }
+};
 } // rt

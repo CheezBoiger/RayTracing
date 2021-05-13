@@ -17,15 +17,29 @@
 namespace rt {
 
 
+// Shape structure.
 struct Shape 
 {
 
     virtual Matrix44 getLocalToWorld() const { return m_localToWorld; }
     virtual Matrix44 getWorldToLocal() const { return m_worldToLocal; }
 
+    // Check for intersection of the ray, and fill the interaction table
+    // if such an intersection is made.
     virtual B32 intersects(const Ray& ray, SurfaceInteraction& si) = 0;
 
+    // Get the area of our shape.
+    virtual F32 area() const { return 0.f; }
+    
+    // Calculate the probability density function (PDF) for the shape.
+    // This is usually 1 / area. 
+    virtual F32 pdf(const SurfaceInteraction& si) const
+    {
+        return 1.f / area();
+    }
+
 protected:
+    // Shape Transformations.
     Matrix44 m_localToWorld;
     Matrix44 m_worldToLocal;
 };

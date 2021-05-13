@@ -13,11 +13,32 @@
 
 #include "math/CommonMath.hpp"
 
+#define IMDEBUGGING 1
+#if IMDEBUGGING
+    #include <iostream>
+    #include <stdio.h>
+    #define DEBUG(s, ...) printf(s##,__VA_ARGS__)
+
+    // Try to print this crap, in c++
+    template<class F, typename... Args> void doFor(F fun, Args... args) {
+        int x[] = { (fun(args), 0)... };
+    }
+
+    template<typename... Args> void printDebug(Args... args) { 
+        using namespace std;
+        doFor([&](auto arg) -> void { std::cout << arg; }, args...);
+    }
+#else
+    #define DEBUG(s, ...)
+    template<typename... Args> void printDebug(Args... args) { }
+#endif
+
 namespace rt {
 
 
 B32 isBlack(const Float3& color)
 {
+   // printDebug(" ", 3, " ", 4, " cat", "\n");
     return color[0] == 0.f && color[1] == 0.f && color[2] == 0.f;
 }
 
@@ -116,7 +137,12 @@ Float3 Integrator::specularReflect(const Ray& ray, Scene* pScene, const SurfaceI
 {
     Float3 woW = si.wo;
     Float3 wiW;
-    Float3 f = Float3(0.3f, 0.3f, 0.3f);
+
+    // Convert to light space.
+    Float3 wo = worldToLightLocal(woW, si);
+    Float3 wi = worldToLightLocal(wiW, si);
+    F32 pdf = 0.f;
+    Float3 f = Float3(0.3f, 0.3f, 0.3f); //si.pMaterial->sampleDistributionF(wo, wi, Float2(0, 0), pdf);
 
     if (!isBlack(f))
     {

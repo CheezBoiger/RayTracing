@@ -41,7 +41,7 @@ int main(int c, char* argv[])
     for (U32 i = 0; i < 150; ++i) 
     {
         Sphere sphere;
-        sphere.m_localToWorld = translate(identity(), Float3(xy(mt), xy(mt), z(mt)));
+        sphere.m_localToWorld = rotate(translate(identity(), Float3(xy(mt), xy(mt), z(mt))), Float3(1.0f, 0.0f, 0.0f), RT_RAD(90.0f));
         sphere.m_worldToLocal = inverse(sphere.m_localToWorld);
         sphere.m_radius = 1.f;
         spheres.push_back(sphere);
@@ -52,6 +52,19 @@ int main(int c, char* argv[])
         mat->kD = 0.04f;
         materials.push_back(mat);
     }
+    {
+        Sphere sphere;
+        sphere.m_localToWorld = translate(identity(), Float3(0.0, -100.0f, 50.f));
+        sphere.m_worldToLocal = inverse(sphere.m_localToWorld);
+        sphere.m_radius = 100.0f;
+        spheres.push_back(sphere);
+        MatteMaterial* mat =  new MatteMaterial();
+        mat->color = Float3(1.0f, 1.0f, 1.0f);
+        //MicrofacetMaterial* mat = new MicrofacetMaterial();
+        //mat->color = Float3(cc(mt), cc(mt), cc(mt));
+        //mat->kD = 0.04f;
+        materials.push_back(mat);
+    }
     for (U32 i = 0; i < 150; ++i)
     {
         Primitive* prim = new Primitive();
@@ -59,6 +72,14 @@ int main(int c, char* argv[])
         prim->setMat(materials[i]);
         primitives.push_back(prim);
     }
+
+    {
+        Primitive* prim = new Primitive();
+        prim->setShape(&spheres.back());
+        prim->setMat(materials.back());
+        primitives.push_back(prim);
+    }
+
     scene.addPrimitive(primitives.size(), primitives.data());
     scene.addLight(&dirLight);
     Float2 resolution{ 1920, 1080 };
