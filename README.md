@@ -4,4 +4,4 @@ Currently, it only supports spheres, with distance lighting, and Microfacet Refl
 
 # Current Status
 Still work in progress...
-![alt tag](https://raw.githubusercontent.com/Cheezboiger/RayTracing/img/Test.png)
+![alt tag](https://github.com/Cheezboiger/RayTracing/blob/main/img/Test.png?raw=true)
