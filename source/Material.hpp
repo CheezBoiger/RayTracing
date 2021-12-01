@@ -47,7 +47,13 @@ struct MatteMaterial : public Material
     Float3 distributionF(const Float3& wi, const Float3& wo) override;
 };
 
-struct MicrofacetMaterial : public Material
+
+struct TrowbridgeReitzDistribution : public Material
+{
+    Float3 sampleWh(const Float3& wo, const Float2& u) override;
+};
+
+struct MicrofacetMaterial : public TrowbridgeReitzDistribution
 {  
     Float3              color;
     Texture*            albedo;

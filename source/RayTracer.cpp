@@ -4,6 +4,7 @@
 #include "Interaction.hpp"
 #include "Light.hpp"
 #include "Material.hpp"
+#include "common/Threading.hpp"
 
 #include "framebuffer/Image.hpp"
 #include "framebuffer/RenderTarget.hpp"
@@ -43,25 +44,62 @@ B32 isBlack(const Float3& color)
 }
 
 
+class Tonemapper {
+public:
+
+    static Float3 evaluate(const Float3& sceneReferredColor) {
+        // Simple Reinhardt tonemap.
+        return sceneReferredColor / (1.0f + sceneReferredColor);
+    }
+};
+
+
+struct Sample {
+    F32 x;
+    F32 y;
+};
+
+static Sample sample4[] {
+    { 0.25f, 0.25 },
+    { -0.25, -0.25 },
+    { 0.25, -0.25 },
+    {-0.25, 0.25 }
+};
+
 void Integrator::render(Scene* pScene)
 {
     checkFrameBuffer();
 
     checkCamera();
 
-    for (U32 y = 0; y < m_framebuffer.rt0->getHeight(); ++y) 
-    {
-        for (U32 x = 0; x < m_framebuffer.rt0->getWidth(); ++x)
-        {
-            Ray camRay = m_pCamera->generateRay((F32)x, (F32)y);
-            Float3 rgb = li(camRay, pScene, 1);
-            rgb.x = RT_CLAMP(rgb.x, 0.f, 1.f);
-            rgb.y = RT_CLAMP(rgb.y, 0.f, 1.f);
-            rgb.z = RT_CLAMP(rgb.z, 0.f, 1.f);
-            // Write to image.
-            m_framebuffer.rt0->storeColor(x, y, rgb);
+    U64 frameWidth = m_framebuffer.rt0->getWidth();
+    U64 frameHeight = m_framebuffer.rt0->getHeight();
+
+    dispatch({[=] (const ThreadID& id) -> void {
+        Float3 accumColor;
+        U32 x = id.global.x;
+        U32 y = id.global.y;
+
+        if (x >= frameWidth || y >= frameHeight)
+            return;
+
+        for (U32 sample = 0; sample < m_samples; ++sample) {
+            F32 posX = (F32)x + sample4[sample].x;
+            F32 posY = (F32)y + sample4[sample].y;
+            Ray camRay = m_pCamera->generateRay(posX, posY);
+            Float3 sceneColor = li(camRay, pScene, 1);
+            // Tonemap.
+            Float3 rgb = Tonemapper::evaluate(sceneColor);
+            accumColor += rgb;
         }
-    }
+
+        accumColor = accumColor / m_samples;
+        accumColor.x = RT_CLAMP(accumColor.x, 0.f, 1.f);
+        accumColor.y = RT_CLAMP(accumColor.y, 0.f, 1.f);
+        accumColor.z = RT_CLAMP(accumColor.z, 0.f, 1.f);
+        // Write to image.
+        m_framebuffer.rt0->storeColor(x, y, accumColor);
+    }, 64, 64, 1 }, m_framebuffer.rt0->getWidth() / 64 + 1, m_framebuffer.rt0->getHeight() / 64 + 1, 1);
 
     //
     m_output = createPNG("Test.png");

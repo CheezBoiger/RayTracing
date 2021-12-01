@@ -181,8 +181,14 @@ Float3 Material::sampleDistributionF(const Float3& wo, Float3& wi, const Float2&
 {
     wi = Float3(-wo.x, -wo.y, wo.z);
     pdf = 1.f;
+    Float3 wh = Float3();
     // TODO: We are going to need to make a separate BSDF struct for these formulas.
     Float3 r;
     return fresnelDielectric(cosTheta(wi), 0.5f, 0.1f) * r / absCosTheta(wi);
+}
+
+Float3 TrowbridgeReitzDistribution::sampleWh(const Float3& wo, const Float2& u)
+{
+    return Float3();
 }
 } // rt

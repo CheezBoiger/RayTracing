@@ -13,6 +13,7 @@
 #include "scene/Scene.hpp"
 #include "acceleration/SimpleContainer.hpp"
 #include "geometry/Sphere.hpp"
+#include "common/Threading.hpp"
 
 #include <random>
 
@@ -23,7 +24,7 @@ int main(int c, char* argv[])
     DirectionLight dirLight;
     dirLight.enableShadowing(true);
     dirLight.wi = Float3(0.0f, 0.9f, 0.0f);
-    dirLight.l = Float3(15.0f, 15.0f, 15.0f);
+    dirLight.l = Float3(30.0f, 30.0f, 30.0f);
     
     Scene scene;
     SimpleContainer aggregate;
@@ -59,7 +60,7 @@ int main(int c, char* argv[])
         sphere.m_radius = 100.0f;
         spheres.push_back(sphere);
         MatteMaterial* mat =  new MatteMaterial();
-        mat->color = Float3(1.0f, 1.0f, 1.0f);
+        mat->color = Float3(0.0f, 0.6f, 0.05f);
         //MicrofacetMaterial* mat = new MicrofacetMaterial();
         //mat->color = Float3(cc(mt), cc(mt), cc(mt));
         //mat->kD = 0.04f;
@@ -96,12 +97,13 @@ int main(int c, char* argv[])
     camera.adjustScreenToRaster(resolution);
     camera.updateProjection(RT_RAD(45.0f), resolution.x / resolution.y, 0.001f, 1000.0f);
     Matrix44 worldToCamera =  rotate(identity(), Float3(1.0f, 0.0f, 0.0f), RT_RAD(45.0f));
-    worldToCamera = translate(worldToCamera, Float3(0.0, 25.0, -25.0f));
+    worldToCamera = translate(worldToCamera, Float3(0.0, 50.0, -50.0f));
     camera.update(worldToCamera);
 
     // Setup
     integrator.setCamera(&camera);
     integrator.setRenderTarget(&rt);
+    integrator.setSamples(4);
     // Trace the scene.
     integrator.render(&scene);
 

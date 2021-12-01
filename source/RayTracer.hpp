@@ -22,6 +22,7 @@ class Integrator {
 public:
     Integrator()
         : m_maxDepth(2)
+        , m_samples(1)
         , m_output(nullptr)
     {
         m_framebuffer.rt0 = nullptr;
@@ -47,6 +48,8 @@ public:
         m_framebuffer.rt0 = rt;    
     }
 
+    void setSamples(U32 samples) { m_samples = samples > 0 ? samples : 1; }
+
 private:
 
     void checkCamera();
@@ -60,5 +63,6 @@ private:
 
     Image*              m_output;
     U32                 m_maxDepth;
+    U32                 m_samples;
 };
 } // rt
