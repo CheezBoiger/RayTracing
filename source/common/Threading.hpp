@@ -24,37 +24,46 @@ struct Kernel {
     U32 localZ;
 };
 
-
-static void dispatch(const Kernel& kern, U32 x, U32 y, U32 z) {
+// Rudimentary dispatch for parallel work. This is essentially to execute multiple threads within multiple groups,
+// to run the same kernel code. We keep track of the global thread id, and local thread Id within it's workgroup.
+// Currently still a work in progress, but does the job.
+static void dispatch(const Kernel& kern, U32 x, U32 y, U32 z) 
+{
     U64 totalThreadCount = kern.localX * kern.localY * kern.localZ * x * y * z;
     
     std::vector<std::thread> threads(x * y * z);
     {
-        U64 i = 0;
-        for (U64 workX = 0; workX < x; ++workX) {
-            for (U64 workY = 0; workY < y; ++workY) {
-                for (U64 workZ = 0; workZ < z; ++workZ) {
-                threads[workX + x * (workY + y * workZ)] =
+        U64 i_1D = 0;
+        for (U64 workX = 0; workX < x; ++workX) 
+        {
+            for (U64 workY = 0; workY < y; ++workY) 
+            {
+                for (U64 workZ = 0; workZ < z; ++workZ) 
+                {
+                    threads[workX + x * (workY + y * workZ)] =
                     std::thread([=](U64 globalId_1D) -> void {
                         std::vector<ThreadID> ids(kern.localX * kern.localY * kern.localZ);
-                        for (U64 localX = 0; localX < kern.localX; ++localX) {
-                              for (U64 localY = 0; localY < kern.localY; ++localY) {
-                                    for (U64 localZ = 0; localZ < kern.localZ; ++localZ) {
-                                        U64 threadId = localX + kern.localX * (localY + kern.localY * localZ); 
-                                        ids[threadId] = {};
-                                        ids[threadId].local.x = localX;
-                                        ids[threadId].local.y = localY;
-                                        ids[threadId].local.z = localZ;
-                                        ids[threadId].global.x = workX * kern.localX + localX;
-                                        ids[threadId].global.y = workY * kern.localY + localY;
-                                        ids[threadId].global.z = workZ * kern.localZ + localZ;
-                                        ids[threadId].globalId_1D = i; 
-                                        kern.func(ids[threadId]);
-                                    }
-                              }
+                        for (U64 localX = 0; localX < kern.localX; ++localX) 
+                        {
+                            for (U64 localY = 0; localY < kern.localY; ++localY) 
+                            {
+                                for (U64 localZ = 0; localZ < kern.localZ; ++localZ) 
+                                {
+                                    U64 threadId = localX + kern.localX * (localY + kern.localY * localZ); 
+                                    ids[threadId] = {};
+                                    ids[threadId].local.x = localX;
+                                    ids[threadId].local.y = localY;
+                                    ids[threadId].local.z = localZ;
+                                    ids[threadId].global.x = workX * kern.localX + localX;
+                                    ids[threadId].global.y = workY * kern.localY + localY;
+                                    ids[threadId].global.z = workZ * kern.localZ + localZ;
+                                    ids[threadId].globalId_1D = i_1D; 
+                                    kern.func(ids[threadId]);
+                                }
+                            }
                         }                   
-                    }, i);
-                    ++i;
+                    }, i_1D);
+                    ++i_1D;
                 }
             }
         }

@@ -8,6 +8,7 @@
 #include "math/Float.hpp"
 #include "math/Ray.hpp"
 #include <vector>
+#include <functional>
 
 namespace rt {
 
@@ -18,7 +19,21 @@ struct SurfaceInteraction;
 class Image;
 class Scene;
 
-class Integrator {
+class Tonemapper
+{
+ public:
+  typedef std::function<Float3(const Float3&)> EvaluateFun;
+  EvaluateFun evaluate;
+};
+
+static Float3 reinhardtToneMapEvaluate(const Float3& sceneReferredColor) 
+{
+  // Simple Reinhardt tonemap.
+  return sceneReferredColor / (1.0f + sceneReferredColor);
+}
+
+class Integrator 
+{
 public:
     Integrator()
         : m_maxDepth(2)
@@ -48,6 +63,11 @@ public:
         m_framebuffer.rt0 = rt;    
     }
 
+    void setTonemapFun(Tonemapper::EvaluateFun fun)
+    {
+        m_tonemap.evaluate = fun;
+    }
+
     void setSamples(U32 samples) { m_samples = samples > 0 ? samples : 1; }
 
 private:
@@ -64,5 +84,6 @@ private:
     Image*              m_output;
     U32                 m_maxDepth;
     U32                 m_samples;
+    Tonemapper          m_tonemap;
 };
 } // rt

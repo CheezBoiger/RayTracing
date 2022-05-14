@@ -6,7 +6,7 @@
 
 namespace rt {
 
-struct Material;
+struct IMaterial;
 
 
 // A surface interaction made by a given ray, will need to be stored as data to be used 
@@ -22,7 +22,7 @@ struct SurfaceInteraction
     Float3      dpdu; // tangent u.
     Float3      dpdv; // tangent v.
 
-    Material*   pMaterial;
+    IMaterial*  pMaterial;
     F32         time;
 };
 } // rt

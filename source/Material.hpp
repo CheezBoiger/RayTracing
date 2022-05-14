@@ -6,6 +6,9 @@
 
 #include <math.h>
 
+#include <string>
+#include <unordered_map>
+
 namespace rt {
 
 class Texture;
@@ -26,9 +29,9 @@ Float3  lightLocalToWorld(const Float3& v, const SurfaceInteraction& si);
 // hemisphere, then the sampling probability is 0.
 B32     sameHemisphere(const Float3& w, const Float3& wp);
 
-struct Material
+struct IMaterial
 {
-    virtual ~Material() { }
+    virtual ~IMaterial() { }
 
     // Sample the distribution, but also be sure to convert wi and wo to 
     // shading space before passing to this function.
@@ -40,7 +43,34 @@ struct Material
     virtual Float3 sampleWh(const Float3& wo, const Float2& u) { return Float3(); }
 };
 
-struct MatteMaterial : public Material
+// Custom materials can store multiple types of textures, which should 
+// allow us to handle multiple different material types.
+struct CustomMaterial : public IMaterial
+{
+public:
+    
+    struct Common 
+    {
+        static const std::string kNormal;
+        static const std::string kAlbedo;
+        static const std::string kRoughness;
+        static const std::string kSpecular;
+        static const std::string kGloss;
+        static const std::string kDiffuse;
+    };
+
+    // Get the texture in this custom material container.
+    // Return true if we have the texture, and have written to pTextureOut. False returned if we 
+    // dont have the texture, and have not written to pTextureOut.
+    bool getTexture(const std::string& texName, Texture** pTextureOut);
+    
+    void setTexture(const std::string& texName, Texture* pTextureToStore);
+
+private:
+    std::unordered_map<std::string, Texture*> m_textureMap;
+};
+
+struct MatteMaterial : public IMaterial
 {
     Float4              color;
     // Sample the distribution function.
@@ -48,7 +78,7 @@ struct MatteMaterial : public Material
 };
 
 
-struct TrowbridgeReitzDistribution : public Material
+struct TrowbridgeReitzDistribution : public IMaterial
 {
     Float3 sampleWh(const Float3& wo, const Float2& u) override;
 };

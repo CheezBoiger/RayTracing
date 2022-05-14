@@ -156,6 +156,15 @@ struct Float3 {
     friend Float3 operator/(F32 lh, const Float3& rh) {
         return Float3(lh / rh.x, lh / rh.y, lh / rh.z);
     }
+
+    friend B32 operator<(const Float3& lh, F32 rh) {
+        return (lh.x < rh) && (lh.y < rh) && (lh.z < rh);
+    }
+
+    friend B32 operator>(const Float3& lh, F32 rh)
+    {
+        return (lh.x > rh) && (lh.y > rh) && (lh.z > rh);
+    }
 };
 
 
@@ -293,4 +302,12 @@ Float3  reflect(const Float3& vI, const Float3& vN);
 
 // Refraction calculation.
 Float3  refract(const Float3& vI, const Float3& vN, F32 eta);
+
+F32 cosTheta(const Float3& w);
+F32 cos2Theta(const Float3& w);
+F32 absCosTheta(const Float3& w);
+F32 sin2Theta(const Float3& w);
+F32 sinTheta(const Float3& w);
+F32 tanTheta(const Float3& w);
+F32 tan2Theta(const Float3& w);
 } // rt

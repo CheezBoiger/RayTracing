@@ -31,7 +31,7 @@ int main(int c, char* argv[])
     scene.setAggregate(&aggregate);
     std::vector<Sphere> spheres;
     std::vector<Primitive*> primitives;
-    std::vector<Material*> materials;
+    std::vector<IMaterial*> materials;
 
     std::random_device dev;
     std::mt19937 mt(dev());
@@ -101,9 +101,10 @@ int main(int c, char* argv[])
     camera.update(worldToCamera);
 
     // Setup
+    integrator.setTonemapFun(reinhardtToneMapEvaluate);
     integrator.setCamera(&camera);
     integrator.setRenderTarget(&rt);
-    integrator.setSamples(4);
+    integrator.setSamples(1);
     // Trace the scene.
     integrator.render(&scene);
 

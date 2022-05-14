@@ -43,17 +43,6 @@ B32 isBlack(const Float3& color)
     return color[0] == 0.f && color[1] == 0.f && color[2] == 0.f;
 }
 
-
-class Tonemapper {
-public:
-
-    static Float3 evaluate(const Float3& sceneReferredColor) {
-        // Simple Reinhardt tonemap.
-        return sceneReferredColor / (1.0f + sceneReferredColor);
-    }
-};
-
-
 struct Sample {
     F32 x;
     F32 y;
@@ -88,8 +77,9 @@ void Integrator::render(Scene* pScene)
             F32 posY = (F32)y + sample4[sample].y;
             Ray camRay = m_pCamera->generateRay(posX, posY);
             Float3 sceneColor = li(camRay, pScene, 1);
-            // Tonemap.
-            Float3 rgb = Tonemapper::evaluate(sceneColor);
+            // Tonemap. Since this is optional, we need to check if there is a function to use. Otherwise,
+            // just store the raw color.
+            Float3 rgb = (m_tonemap.evaluate) ? m_tonemap.evaluate(sceneColor) : sceneColor;
             accumColor += rgb;
         }
 

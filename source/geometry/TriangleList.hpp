@@ -21,6 +21,12 @@ public:
     void loadVertices();
     void cleanUp();
 
+    Triangle getTriangle(U32 index) 
+    {
+        if (index > m_nTriangles)
+            return Triangle(nullptr, nullptr, 0);
+        return Triangle(this, m_indices, index);
+    }
 
     // Getters for vertex values.
     inline const Float3& getPosition(U32 index) const   { return m_vertices.m_positions[index]; }
@@ -42,12 +48,66 @@ private:
 };
 
 
+// Triangle representation from a given triangle list. This will ultimately define how each 
+// triangle from a list must be processed.
 struct Triangle : public Shape
 {
+    Triangle(TriangleList* pList, U32* indices, U32 index)
+        : m_pTriangleList(pList)
+        , m_index(indices + index * 3u)
+    {
+        
+    }
 
     B32 intersects(const Ray& ray, SurfaceInteraction& si) override
     {   
-        
+        // Use Moller-Trumbore intersection algorithm.
+        const F32 kEpsilon = 0.0000001f;
+        Float3 p0 = m_pTriangleList->getPosition(m_index[0]);
+        Float3 p1 = m_pTriangleList->getPosition(m_index[1]);
+        Float3 p2 = m_pTriangleList->getPosition(m_index[2]);
+
+        Float3 edge1 = p1 - p0;
+        Float3 edge2 = p2 - p0;
+        Float3 s;
+        Float3 q;
+
+        Float3 h    = cross(ray.dir, edge2);
+        F32 a       = dot(edge1, h);
+        F32 f       = 0.f;
+
+        // U and V are calculated with barycentrics.
+        F32 u, v    = -1.0f;
+
+        if (a > -kEpsilon && a < kEpsilon)
+            return false;
+
+        f = 1.0f / a;
+        s = ray.o - p0;
+        u = f * dot(s, h);
+
+        if (u < 0.0f || u > 1.0f)
+            return false;
+
+        q = cross(s, edge1);
+        v = f * dot(ray.dir, q);
+
+        if (v < 0.0f | (u + v) > 1.0f)
+            return false;
+
+        F32 t = f * dot(edge2, q);
+
+        // We have intersected this ray.
+        if (t > kEpsilon)
+        {
+            si.time         = t;
+            si.vPosition    = ray.o + ray.dir * t;
+            si.vNormal      = cross(edge1, edge2);
+            si.vTexCoord    = Float2(u, v);
+            si.wo           = -ray.dir;
+            return true;
+        }
+
         return false;
     }
 
@@ -61,7 +121,7 @@ struct Triangle : public Shape
         return 0.5f * length(cross(p1 - p0, p2 - p0));
     }
 private:
-    TriangleList* m_pTriangleList;
-    const U32* m_index;
+    TriangleList*   m_pTriangleList;
+    const U32*      m_index;
 };
 } // namespace rt

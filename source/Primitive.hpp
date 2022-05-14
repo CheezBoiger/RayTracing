@@ -54,18 +54,18 @@ struct Primitive
         return intersect;
     }
 
-    Material* getMat() { return m_pMaterial; }
+    IMaterial* getMat() { return m_pMaterial; }
     Shape* getShape() { return m_pShape; }
 
     Bounds3& getLocalBounds() { return Bounds3(); }
     Bounds3& getWorldBounds() { return Bounds3(); }
 
     void setShape(Shape* pShape) { m_pShape = pShape; }
-    void setMat(Material* pMat) { m_pMaterial = pMat; }
+    void setMat(IMaterial* pMat) { m_pMaterial = pMat; }
     
 private:
     Shape*      m_pShape;
-    Material*   m_pMaterial;
+    IMaterial*  m_pMaterial;
     Bounds3     m_localBounds;
     Bounds3     m_worldBounds;
 };

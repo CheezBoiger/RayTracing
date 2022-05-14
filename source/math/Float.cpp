@@ -121,4 +121,39 @@ Float4 pow(const Float4& lh, F32 exp)
 {
     return Float4(powf(lh.x, exp), powf(lh.y, exp), powf(lh.z, exp), powf(lh.w, exp));
 }
+
+F32 cosTheta(const Float3& w) 
+{
+    return w.z;
+}
+
+F32 cos2Theta(const Float3& w)
+{
+    return w.z * w.z;
+}
+
+F32 absCosTheta(const Float3& w)
+{
+    return fabsf(w.z);
+}
+
+F32 sin2Theta(const Float3& w)
+{
+    return fmaxf(0.f, 1.f - cos2Theta(w));
+}
+
+F32 sinTheta(const Float3& w)
+{
+    return sqrtf(sin2Theta(w));
+}
+
+F32 tanTheta(const Float3& w)
+{
+    return sinTheta(w) / cosTheta(w);
+}
+
+F32 tan2Theta(const Float3& w)
+{
+    return sin2Theta(w) / cos2Theta(w);
+}
 } // rt

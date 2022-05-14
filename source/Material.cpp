@@ -6,40 +6,12 @@
 
 namespace rt {
 
-F32 cosTheta(const Float3& w) 
-{
-    return w.z;
-}
-
-F32 cos2Theta(const Float3& w)
-{
-    return w.z * w.z;
-}
-
-F32 absCosTheta(const Float3& w)
-{
-    return fabsf(w.z);
-}
-
-F32 sin2Theta(const Float3& w)
-{
-    return fmaxf(0.f, 1.f - cos2Theta(w));
-}
-
-F32 sinTheta(const Float3& w)
-{
-    return sqrtf(sin2Theta(w));
-}
-
-F32 tanTheta(const Float3& w)
-{
-    return sinTheta(w) / cosTheta(w);
-}
-
-F32 tan2Theta(const Float3& w)
-{
-    return sin2Theta(w) / cos2Theta(w);
-}
+const std::string CustomMaterial::Common::kNormal = "normal";
+const std::string CustomMaterial::Common::kAlbedo = "albedo";
+const std::string CustomMaterial::Common::kRoughness = "roughness";
+const std::string CustomMaterial::Common::kSpecular = "specular";
+const std::string CustomMaterial::Common::kGloss = "gloss";
+const std::string CustomMaterial::Common::kDiffuse = "diffuse";
 
 // Reflectance 
 Float3 lambertDiffuse(const Float3& r)
@@ -94,6 +66,7 @@ Float3 fresnelDielectric(F32 cosThetaI, F32 etaI, F32 etaT)
     B32 entering = cosThetaI > 0.f;
     if (!entering)
     {
+        // Doing a really lame swap. This is probably what is already happening internally.
         *(U32*)&etaI ^= *(U32*)&etaT;
         *(U32*)&etaT ^= *(U32*)&etaI;
         *(U32*)&etaI ^= *(U32*)&etaT;
@@ -177,7 +150,7 @@ Float3 lightLocalToWorld(const Float3& v, const SurfaceInteraction& si)
     );
 }
 
-Float3 Material::sampleDistributionF(const Float3& wo, Float3& wi, const Float2& u, F32& pdf)
+Float3 IMaterial::sampleDistributionF(const Float3& wo, Float3& wi, const Float2& u, F32& pdf)
 {
     wi = Float3(-wo.x, -wo.y, wo.z);
     pdf = 1.f;
@@ -190,5 +163,19 @@ Float3 Material::sampleDistributionF(const Float3& wo, Float3& wi, const Float2&
 Float3 TrowbridgeReitzDistribution::sampleWh(const Float3& wo, const Float2& u)
 {
     return Float3();
+}
+
+bool CustomMaterial::getTexture(const std::string& texName, Texture** pTextureOut)
+{
+    if (texName.empty())
+        return false;
+
+    auto& it = m_textureMap.find(texName);
+    
+    if ((it = m_textureMap.find(texName)) == m_textureMap.end())
+        return false;
+
+    *pTextureOut = it->second;
+    return true;
 }
 } // rt

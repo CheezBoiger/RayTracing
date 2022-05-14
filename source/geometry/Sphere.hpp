@@ -25,6 +25,7 @@ private:
         }
         if (x0 > x1)
         {
+            // Swapping nonsense...
             (U32&)x0 ^= (U32&)x1;
             (U32&)x1 ^= (U32&)x0;
             (U32&)x0 ^= (U32&)x1;
@@ -52,6 +53,7 @@ public:
             return false;
         if (t0 > t1)
         {
+            // More swapping nonsense...
             (U32&)t0 ^= (U32&)t1;
             (U32&)t1 ^= (U32&)t0;
             (U32&)t0 ^= (U32&)t1;        
